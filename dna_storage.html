@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNA-Based Storage System Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Custom Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 12, 41, 0.5);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            border: 2px solid rgba(15, 12, 41, 0.5);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+
+        /* Firefox Scrollbar */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #667eea rgba(15, 12, 41, 0.5);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ffffff;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(103, 126, 234, 0.5);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #b8b8d1;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 1.3em;
+            color: #a5b4fc;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #d1d5db;
+            font-weight: 500;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.05);
+            color: #ffffff;
+            backdrop-filter: blur(5px);
+        }
+
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: rgba(165, 180, 252, 0.5);
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 15px rgba(165, 180, 252, 0.3);
+        }
+
+        input[type="text"]::placeholder, textarea::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+
+        .mapping-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .mapping-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mapping-item label {
+            margin: 0;
+            min-width: 80px;
+            font-weight: 600;
+        }
+
+        .mapping-item input {
+            flex: 1;
+            padding: 10px;
+        }
+
+        .base-label {
+            font-size: 1.2em;
+            padding: 8px 15px;
+            border-radius: 6px;
+            color: white;
+            font-weight: bold;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .base-A { background-color: #e74c3c; }
+        .base-T { background-color: #3498db; }
+        .base-C { background-color: #2ecc71; }
+        .base-G { background-color: #f39c12; }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+        }
+
+        .btn-encode {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .btn-decode {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .btn-resimulate {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .btn-clear {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(165, 180, 252, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .canvas-container {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+        }
+
+        .canvas-container::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .canvas-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .canvas-container::-webkit-scrollbar-thumb {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+        }
+
+        .canvas-container::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(90deg, #764ba2 0%, #667eea 100%);
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .info-box {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .info-box h3 {
+            color: #60a5fa;
+            margin-bottom: 10px;
+        }
+
+        .info-box p {
+            color: #d1d5db;
+            line-height: 1.6;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #a5b4fc;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(165, 180, 252, 0.2);
+        }
+
+        .stat-label {
+            color: #9ca3af;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            color: #ffffff;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #d1d5db;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid #ef4444;
+            padding: 15px;
+            border-radius: 8px;
+            color: #fca5a5;
+            margin: 20px 0;
+            display: none;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧬 DNA-Based Storage System</h1>
+        <p class="subtitle">Simulate DNA data encoding with customizable base mappings</p>
+
+        <div class="error" id="errorBox"></div>
+
+        <!-- Input Section -->
+        <div class="section">
+            <h2 class="section-title">📝 Input Text</h2>
+            <div class="input-group">
+                <label for="inputText">Enter text to encode:</label>
+                <textarea id="inputText" placeholder="Type your message here...">Hello DNA!</textarea>
+            </div>
+        </div>
+
+        <!-- DNA Mapping Section -->
+        <div class="section">
+            <h2 class="section-title">🔬 DNA Base Mappings</h2>
+            <p style="color: #9ca3af; margin-bottom: 15px;">Define binary (2-bit) codes for each DNA base:</p>
+            <div class="mapping-grid">
+                <div class="mapping-item">
+                    <span class="base-label base-A">A</span>
+                    <input type="text" id="mapA" value="00" maxlength="2" placeholder="00">
+                </div>
+                <div class="mapping-item">
+                    <span class="base-label base-T">T</span>
+                    <input type="text" id="mapT" value="01" maxlength="2" placeholder="01">
+                </div>
+                <div class="mapping-item">
+                    <span class="base-label base-C">C</span>
+                    <input type="text" id="mapC" value="10" maxlength="2" placeholder="10">
+                </div>
+                <div class="mapping-item">
+                    <span class="base-label base-G">G</span>
+                    <input type="text" id="mapG" value="11" maxlength="2" placeholder="11">
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="button-group">
+            <button class="btn-encode" onclick="encode()">🔒 Encode to DNA</button>
+            <button class="btn-decode" onclick="decode()">🔓 Decode to Text</button>
+            <button class="btn-resimulate" onclick="resimulate()">🔄 Re-simulate</button>
+            <button class="btn-clear" onclick="clearAll()">🗑️ Clear All</button>
+        </div>
+
+        <!-- Visualization Section -->
+        <div class="section">
+            <h2 class="section-title">🎨 DNA Sequence Visualization</h2>
+            <div class="canvas-container">
+                <canvas id="dnaCanvas"></canvas>
+            </div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color base-A"></div>
+                    <span>Adenine (A)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color base-T"></div>
+                    <span>Thymine (T)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color base-C"></div>
+                    <span>Cytosine (C)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color base-G"></div>
+                    <span>Guanine (G)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-label">DNA Sequence Length</div>
+                <div class="stat-value" id="seqLength">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Original Text Length</div>
+                <div class="stat-value" id="textLength">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Binary Bits</div>
+                <div class="stat-value" id="binaryLength">0</div>
+            </div>
+        </div>
+
+        <!-- Output Section -->
+        <div class="section">
+            <h2 class="section-title">📤 Results</h2>
+            <div class="input-group">
+                <label for="dnaSequence">DNA Sequence:</label>
+                <textarea id="dnaSequence" readonly placeholder="DNA sequence will appear here..."></textarea>
+            </div>
+            <div class="input-group">
+                <label for="decodedText">Decoded Text:</label>
+                <textarea id="decodedText" readonly placeholder="Decoded text will appear here..."></textarea>
+            </div>
+        </div>
+
+        <!-- Info Box -->
+        <div class="info-box">
+            <h3>ℹ️ How it works:</h3>
+            <p>
+                <strong>1. Encoding:</strong> Your text is converted to binary (8 bits per character), then split into 2-bit pairs. Each pair maps to a DNA base (A, T, C, or G) according to your custom mappings.<br><br>
+                <strong>2. Visualization:</strong> The DNA sequence is displayed as colored blocks on the canvas.<br><br>
+                <strong>3. Decoding:</strong> The process reverses - DNA bases convert to binary pairs, then to characters.<br><br>
+                <strong>4. Re-simulate:</strong> Change the mappings anytime to see how different encoding schemes affect the DNA sequence!
+            </p>
+        </div>
+    </div>
+
+    <script>
+        let currentDNASequence = '';
+        let currentBinary = '';
+        const canvas = document.getElementById('dnaCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // DNA base colors
+        const colors = {
+            'A': '#e74c3c',
+            'T': '#3498db',
+            'C': '#2ecc71',
+            'G': '#f39c12'
+        };
+
+        function showError(message) {
+            const errorBox = document.getElementById('errorBox');
+            errorBox.textContent = message;
+            errorBox.style.display = 'block';
+            setTimeout(() => {
+                errorBox.style.display = 'none';
+            }, 5000);
+        }
+
+        function validateMappings() {
+            const mappings = {
+                'A': document.getElementById('mapA').value,
+                'T': document.getElementById('mapT').value,
+                'C': document.getElementById('mapC').value,
+                'G': document.getElementById('mapG').value
+            };
+
+            // Check if all mappings are 2-bit binary
+            for (let base in mappings) {
+                if (!/^[01]{2}$/.test(mappings[base])) {
+                    showError(`Invalid mapping for ${base}. Please use 2-digit binary (00, 01, 10, or 11).`);
+                    return null;
+                }
+            }
+
+            // Check for duplicate mappings
+            const values = Object.values(mappings);
+            if (new Set(values).size !== values.length) {
+                showError('Each DNA base must have a unique binary mapping!');
+                return null;
+            }
+
+            return mappings;
+        }
+
+        function textToBinary(text) {
+            return text.split('').map(char => {
+                return char.charCodeAt(0).toString(2).padStart(8, '0');
+            }).join('');
+        }
+
+        function binaryToText(binary) {
+            let text = '';
+            for (let i = 0; i < binary.length; i += 8) {
+                const byte = binary.substr(i, 8);
+                if (byte.length === 8) {
+                    text += String.fromCharCode(parseInt(byte, 2));
+                }
+            }
+            return text;
+        }
+
+        function binaryToDNA(binary, mappings) {
+            // Create reverse mapping
+            const binaryToBase = {};
+            for (let base in mappings) {
+                binaryToBase[mappings[base]] = base;
+            }
+
+            let dna = '';
+            for (let i = 0; i < binary.length; i += 2) {
+                const pair = binary.substr(i, 2);
+                if (pair.length === 2) {
+                    dna += binaryToBase[pair] || 'A'; // Default to A if mapping not found
+                }
+            }
+            return dna;
+        }
+
+        function dnaToBase(dna, mappings) {
+            let binary = '';
+            for (let base of dna) {
+                binary += mappings[base] || '00';
+            }
+            return binary;
+        }
+
+        function encode() {
+            const text = document.getElementById('inputText').value;
+            
+            if (!text) {
+                showError('Please enter some text to encode!');
+                return;
+            }
+
+            const mappings = validateMappings();
+            if (!mappings) return;
+
+            // Convert text to binary
+            currentBinary = textToBinary(text);
+            
+            // Convert binary to DNA
+            currentDNASequence = binaryToDNA(currentBinary, mappings);
+            
+            // Display results
+            document.getElementById('dnaSequence').value = currentDNASequence;
+            document.getElementById('textLength').textContent = text.length;
+            document.getElementById('seqLength').textContent = currentDNASequence.length;
+            document.getElementById('binaryLength').textContent = currentBinary.length;
+            
+            // Visualize
+            visualizeDNA(currentDNASequence);
+        }
+
+        function decode() {
+            if (!currentDNASequence) {
+                showError('Please encode some text first!');
+                return;
+            }
+
+            const mappings = validateMappings();
+            if (!mappings) return;
+
+            // Convert DNA to binary
+            const binary = dnaToBase(currentDNASequence, mappings);
+            
+            // Convert binary to text
+            const decodedText = binaryToText(binary);
+            
+            // Display result
+            document.getElementById('decodedText').value = decodedText;
+        }
+
+        function resimulate() {
+            if (!currentBinary) {
+                showError('Please encode some text first!');
+                return;
+            }
+
+            const mappings = validateMappings();
+            if (!mappings) return;
+
+            // Re-encode with new mappings
+            currentDNASequence = binaryToDNA(currentBinary, mappings);
+            
+            // Display results
+            document.getElementById('dnaSequence').value = currentDNASequence;
+            document.getElementById('seqLength').textContent = currentDNASequence.length;
+            
+            // Visualize
+            visualizeDNA(currentDNASequence);
+            
+            // Clear decoded text as it needs to be re-decoded
+            document.getElementById('decodedText').value = '';
+        }
+
+        function visualizeDNA(sequence) {
+            if (!sequence) return;
+
+            const blockSize = 30;
+            const blocksPerRow = Math.floor(window.innerWidth < 768 ? 15 : 25);
+            const rows = Math.ceil(sequence.length / blocksPerRow);
+            
+            canvas.width = blocksPerRow * blockSize + 40;
+            canvas.height = rows * blockSize + 40;
+            
+            // Clear canvas with dark background
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw DNA sequence
+            for (let i = 0; i < sequence.length; i++) {
+                const base = sequence[i];
+                const row = Math.floor(i / blocksPerRow);
+                const col = i % blocksPerRow;
+                
+                const x = col * blockSize + 20;
+                const y = row * blockSize + 20;
+                
+                // Draw colored block
+                ctx.fillStyle = colors[base] || '#cccccc';
+                ctx.fillRect(x, y, blockSize - 2, blockSize - 2);
+                
+                // Draw base letter
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 16px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(base, x + blockSize / 2 - 1, y + blockSize / 2 - 1);
+            }
+        }
+
+        function clearAll() {
+            document.getElementById('inputText').value = '';
+            document.getElementById('dnaSequence').value = '';
+            document.getElementById('decodedText').value = '';
+            document.getElementById('textLength').textContent = '0';
+            document.getElementById('seqLength').textContent = '0';
+            document.getElementById('binaryLength').textContent = '0';
+            
+            currentDNASequence = '';
+            currentBinary = '';
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            canvas.width = 800;
+            canvas.height = 200;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // Initialize canvas
+        window.onload = function() {
+            canvas.width = 800;
+            canvas.height = 200;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw placeholder text
+            ctx.fillStyle = '#6b7280';
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('DNA sequence will be visualized here', canvas.width / 2, canvas.height / 2);
+        };
+
+        // Make canvas responsive
+        window.addEventListener('resize', function() {
+            if (currentDNASequence) {
+                visualizeDNA(currentDNASequence);
+            }
+        });
+    </script>
+</body>
+</html>
