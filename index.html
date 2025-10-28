@@ -168,17 +168,48 @@
         .base-C { background-color: #2ecc71; }
         .base-G { background-color: #f39c12; }
 
+        .io-container {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .arrow-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            width: auto;
+            padding: 15px 25px;
+            cursor: pointer;
+            transition: opacity 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .arrow-button:hover {
+            opacity: 0.9;
+        }
+
+        .arrow-button:active {
+            opacity: 0.8;
+        }
+
         .button-group {
             display: flex;
             gap: 15px;
             flex-wrap: wrap;
             margin-top: 20px;
+            justify-content: center;
         }
 
         button {
-            flex: 1;
-            min-width: 150px;
-            padding: 15px 30px;
+            padding: 15px 40px;
             font-size: 16px;
             font-weight: 600;
             border: none;
@@ -186,22 +217,7 @@
             cursor: pointer;
             transition: all 0.3s;
             color: white;
-        }
-
-        .btn-encode {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .btn-decode {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-
-        .btn-resimulate {
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-
-        .btn-clear {
-            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
         }
 
         button:hover {
@@ -340,6 +356,15 @@
                 font-size: 1.8em;
             }
 
+            .io-container {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .arrow-button {
+                width: 100%;
+            }
+
             .button-group {
                 flex-direction: column;
             }
@@ -357,13 +382,35 @@
 
         <div class="error" id="errorBox"></div>
 
-        <!-- Input Section -->
+        <!-- Main Input/Output Section -->
         <div class="section">
-            <h2 class="section-title">📝 Input Text</h2>
-            <div class="input-group">
-                <label for="inputText">Enter text to encode:</label>
-                <textarea id="inputText" placeholder="Type your message here...">Hello DNA!</textarea>
+            <div class="io-container">
+                <!-- Text Box -->
+                <div class="input-group">
+                    <label for="textInput" id="label1">Text:</label>
+                    <textarea id="textInput" placeholder="Type your message here...">Hello DNA!</textarea>
+                </div>
+
+                <!-- Arrow Button -->
+                <button class="arrow-button" onclick="toggleMode()" title="Switch between Encode/Decode">⇄</button>
+
+                <!-- DNA Box -->
+                <div class="input-group">
+                    <label for="dnaInput" id="label2">DNA Sequence:</label>
+                    <textarea id="dnaInput" readonly placeholder="DNA sequence will appear here..."></textarea>
+                </div>
             </div>
+
+            <!-- Binary Box -->
+            <div class="input-group">
+                <label for="binaryInput">Binary Code:</label>
+                <textarea id="binaryInput" readonly placeholder="Binary code will appear here..."></textarea>
+            </div>
+        </div>
+
+        <!-- Re-simulate Button -->
+        <div class="button-group">
+            <button onclick="resimulate()">� Re-simulate with New Mappings</button>
         </div>
 
         <!-- DNA Mapping Section -->
@@ -388,14 +435,6 @@
                     <input type="text" id="mapG" value="11" maxlength="2" placeholder="11">
                 </div>
             </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="button-group">
-            <button class="btn-encode" onclick="encode()">🔒 Encode to DNA</button>
-            <button class="btn-decode" onclick="decode()">🔓 Decode to Text</button>
-            <button class="btn-resimulate" onclick="resimulate()">🔄 Re-simulate</button>
-            <button class="btn-clear" onclick="clearAll()">🗑️ Clear All</button>
         </div>
 
         <!-- Visualization Section -->
@@ -440,19 +479,6 @@
             </div>
         </div>
 
-        <!-- Output Section -->
-        <div class="section">
-            <h2 class="section-title">📤 Results</h2>
-            <div class="input-group">
-                <label for="dnaSequence">DNA Sequence:</label>
-                <textarea id="dnaSequence" readonly placeholder="DNA sequence will appear here..."></textarea>
-            </div>
-            <div class="input-group">
-                <label for="decodedText">Decoded Text:</label>
-                <textarea id="decodedText" readonly placeholder="Decoded text will appear here..."></textarea>
-            </div>
-        </div>
-
         <!-- Info Box -->
         <div class="info-box">
             <h3>ℹ️ How it works:</h3>
@@ -468,6 +494,7 @@
     <script>
         let currentDNASequence = '';
         let currentBinary = '';
+        let currentMode = 'encode'; // 'encode' or 'decode'
         const canvas = document.getElementById('dnaCanvas');
         const ctx = canvas.getContext('2d');
 
@@ -478,6 +505,113 @@
             'C': '#2ecc71',
             'G': '#f39c12'
         };
+
+        // Real-time processing when first text box changes
+        document.getElementById('textInput').addEventListener('input', function() {
+            processData();
+        });
+
+        // Initialize on page load
+        window.onload = function() {
+            canvas.width = 800;
+            canvas.height = 200;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw placeholder text
+            ctx.fillStyle = '#6b7280';
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('DNA sequence will be visualized here', canvas.width / 2, canvas.height / 2);
+            
+            // Process initial text
+            processData();
+        };
+
+        function toggleMode() {
+            if (currentMode === 'encode') {
+                // Switch to decode mode
+                currentMode = 'decode';
+                document.getElementById('label1').textContent = 'DNA Sequence:';
+                document.getElementById('label2').textContent = 'Text:';
+                
+                // Swap values
+                const tempValue = document.getElementById('textInput').value;
+                document.getElementById('textInput').value = document.getElementById('dnaInput').value;
+                document.getElementById('dnaInput').value = tempValue;
+                
+                document.getElementById('textInput').placeholder = 'Enter DNA sequence...';
+                document.getElementById('dnaInput').placeholder = 'Text will appear here...';
+            } else {
+                // Switch to encode mode
+                currentMode = 'encode';
+                document.getElementById('label1').textContent = 'Text:';
+                document.getElementById('label2').textContent = 'DNA Sequence:';
+                
+                // Swap values back
+                const tempValue = document.getElementById('textInput').value;
+                document.getElementById('textInput').value = document.getElementById('dnaInput').value;
+                document.getElementById('dnaInput').value = tempValue;
+                
+                document.getElementById('textInput').placeholder = 'Type your message here...';
+                document.getElementById('dnaInput').placeholder = 'DNA sequence will appear here...';
+            }
+            
+            // Process with new mode
+            processData();
+        }
+
+        function processData() {
+            const mappings = validateMappings();
+            if (!mappings) return;
+
+            const input = document.getElementById('textInput').value;
+            
+            if (!input) {
+                clearOutputs();
+                return;
+            }
+
+            if (currentMode === 'encode') {
+                // Encode: Text -> Binary -> DNA
+                currentBinary = textToBinary(input);
+                currentDNASequence = binaryToDNA(currentBinary, mappings);
+
+                document.getElementById('dnaInput').value = currentDNASequence;
+                document.getElementById('binaryInput').value = currentBinary;
+                document.getElementById('textLength').textContent = input.length;
+                document.getElementById('seqLength').textContent = currentDNASequence.length;
+                document.getElementById('binaryLength').textContent = currentBinary.length;
+
+                visualizeDNA(currentDNASequence);
+            } else {
+                // Decode: DNA -> Binary -> Text
+                currentDNASequence = input;
+                currentBinary = dnaToBase(input, mappings);
+                const text = binaryToText(currentBinary);
+
+                document.getElementById('dnaInput').value = text;
+                document.getElementById('binaryInput').value = currentBinary;
+                document.getElementById('textLength').textContent = text.length;
+                document.getElementById('seqLength').textContent = input.length;
+                document.getElementById('binaryLength').textContent = currentBinary.length;
+
+                visualizeDNA(currentDNASequence);
+            }
+        }
+
+        function clearOutputs() {
+            document.getElementById('dnaInput').value = '';
+            document.getElementById('binaryInput').value = '';
+            document.getElementById('textLength').textContent = '0';
+            document.getElementById('seqLength').textContent = '0';
+            document.getElementById('binaryLength').textContent = '0';
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            canvas.width = 800;
+            canvas.height = 200;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
 
         function showError(message) {
             const errorBox = document.getElementById('errorBox');
@@ -556,73 +690,30 @@
             return binary;
         }
 
-        function encode() {
-            const text = document.getElementById('inputText').value;
-            
-            if (!text) {
-                showError('Please enter some text to encode!');
-                return;
-            }
-
-            const mappings = validateMappings();
-            if (!mappings) return;
-
-            // Convert text to binary
-            currentBinary = textToBinary(text);
-            
-            // Convert binary to DNA
-            currentDNASequence = binaryToDNA(currentBinary, mappings);
-            
-            // Display results
-            document.getElementById('dnaSequence').value = currentDNASequence;
-            document.getElementById('textLength').textContent = text.length;
-            document.getElementById('seqLength').textContent = currentDNASequence.length;
-            document.getElementById('binaryLength').textContent = currentBinary.length;
-            
-            // Visualize
-            visualizeDNA(currentDNASequence);
-        }
-
-        function decode() {
-            if (!currentDNASequence) {
-                showError('Please encode some text first!');
-                return;
-            }
-
-            const mappings = validateMappings();
-            if (!mappings) return;
-
-            // Convert DNA to binary
-            const binary = dnaToBase(currentDNASequence, mappings);
-            
-            // Convert binary to text
-            const decodedText = binaryToText(binary);
-            
-            // Display result
-            document.getElementById('decodedText').value = decodedText;
-        }
-
         function resimulate() {
-            if (!currentBinary) {
-                showError('Please encode some text first!');
+            if (!currentBinary && !currentDNASequence) {
+                showError('Please enter some data first!');
                 return;
             }
 
             const mappings = validateMappings();
             if (!mappings) return;
 
-            // Re-encode with new mappings
-            currentDNASequence = binaryToDNA(currentBinary, mappings);
-            
-            // Display results
-            document.getElementById('dnaSequence').value = currentDNASequence;
-            document.getElementById('seqLength').textContent = currentDNASequence.length;
-            
-            // Visualize
-            visualizeDNA(currentDNASequence);
-            
-            // Clear decoded text as it needs to be re-decoded
-            document.getElementById('decodedText').value = '';
+            if (currentMode === 'encode' && currentBinary) {
+                // Re-encode with new mappings
+                currentDNASequence = binaryToDNA(currentBinary, mappings);
+                document.getElementById('dnaInput').value = currentDNASequence;
+                document.getElementById('seqLength').textContent = currentDNASequence.length;
+                visualizeDNA(currentDNASequence);
+            } else if (currentMode === 'decode' && currentDNASequence) {
+                // Re-decode with new mappings
+                currentBinary = dnaToBase(currentDNASequence, mappings);
+                const text = binaryToText(currentBinary);
+                document.getElementById('textInput').value = text;
+                document.getElementById('binaryInput').value = currentBinary;
+                document.getElementById('textLength').textContent = text.length;
+                document.getElementById('binaryLength').textContent = currentBinary.length;
+            }
         }
 
         function visualizeDNA(sequence) {
@@ -660,39 +751,6 @@
                 ctx.fillText(base, x + blockSize / 2 - 1, y + blockSize / 2 - 1);
             }
         }
-
-        function clearAll() {
-            document.getElementById('inputText').value = '';
-            document.getElementById('dnaSequence').value = '';
-            document.getElementById('decodedText').value = '';
-            document.getElementById('textLength').textContent = '0';
-            document.getElementById('seqLength').textContent = '0';
-            document.getElementById('binaryLength').textContent = '0';
-            
-            currentDNASequence = '';
-            currentBinary = '';
-            
-            // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            canvas.width = 800;
-            canvas.height = 200;
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
-
-        // Initialize canvas
-        window.onload = function() {
-            canvas.width = 800;
-            canvas.height = 200;
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw placeholder text
-            ctx.fillStyle = '#6b7280';
-            ctx.font = '20px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('DNA sequence will be visualized here', canvas.width / 2, canvas.height / 2);
-        };
 
         // Make canvas responsive
         window.addEventListener('resize', function() {
